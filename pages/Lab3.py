@@ -12,7 +12,7 @@ openAI_model = st.sidebar.selectbox("Choose a model:", ("mini", "regular"))
 model_to_use = "gpt-4o-mini" if openAI_model == "mini" else "gpt-4o"
 
 # Buffer configuration
-MAX_CONTEXT_TOKENS = 1000
+MAX_CONTEXT_TOKENS = 100
 
 # Initialize OpenAI client
 if 'client' not in st.session_state:
@@ -106,41 +106,31 @@ When asked for "more info", go a bit deeper but still keep it simple and fun."""
 # HELPER FUNCTION: Call OpenAI with buffer
 # ============================================
 def get_response(user_message, provide_more_info=False):
-    """
-    Get a response from OpenAI using the token-buffered conversation history.
-    """
     client = st.session_state.client
     
-    # Build the prompt based on whether we're providing more info
     if provide_more_info:
         prompt = f"The user previously asked about: {st.session_state.current_topic}\n\nPlease provide more interesting details about this topic, still explaining it simply for a 10-year-old. Add a fun fact if you can!"
     else:
         prompt = user_message
         st.session_state.current_topic = user_message
     
-    # Build messages list with system prompt and conversation history
+    # Build messages with system prompt
     messages_to_send = [{"role": "system", "content": SYSTEM_PROMPT}]
     
-    # Add buffered conversation history (excluding the system message we just added)
-    # This gives the model context of recent conversation
-    buffered_history = apply_token_buffer(
-        st.session_state.messages.copy(),
-        max_tokens=MAX_CONTEXT_TOKENS,
-        model=model_to_use
-    )
-    messages_to_send.extend(buffered_history)
+    # Add conversation history
+    messages_to_send.extend(st.session_state.messages)
     
-    # Add the current user prompt
+    # Add current user prompt
     messages_to_send.append({"role": "user", "content": prompt})
     
-    # Apply buffer to final messages list
+    # NOW apply buffer once to the complete message list
     messages_to_send = apply_token_buffer(
         messages_to_send,
         max_tokens=MAX_CONTEXT_TOKENS,
         model=model_to_use
     )
     
-    # Debug info in sidebar
+    # Debug info
     tokens_being_sent = count_messages_tokens(messages_to_send, model_to_use)
     st.sidebar.write(f"Messages in buffer: {len(messages_to_send)}")
     st.sidebar.write(f"Tokens being sent: {tokens_being_sent}")
