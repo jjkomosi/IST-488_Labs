@@ -41,11 +41,7 @@ def add_to_collection(collection, text, file_name):
         input=text,
         model='text-embedding-3-small'
     )
-
-    # get the embedding
     embedding = response.data[0].embedding
-
-    # add embedding and document to chromaDB
     collection.add(
         documents=[text],
         ids=[file_name],
@@ -69,33 +65,90 @@ if collection.count() == 0:
 # Title
 st.title("Lab 4: iSchool Course Chatbot Using RAG")
 
-# Querying a collection -- Only used for testing
+# Part A Testing
+# topic = st.sidebar.text_input('Topic', placeholder='Type your topic (e.g., GenAI)...')
+# if topic:
+#     client = st.session_state.client
+#     response = client.embeddings.create(
+#         input=topic,
+#         model='text-embedding-3-small')
+#     embedding = response.data[0].embedding
+#     results = collection.query(
+#         query_embeddings=[embedding],
+#         n_results=3
+#     )
+#     st.subheader(f'Results for: {topic}')
+#     for i in range(len(results['documents'][0])):
+#         doc_id = results['ids'][0][i]
+#         st.write(f'**{i+1}. {doc_id}**')
+# else:
+#     st.info('Enter a topic in the sidebar to search the collection')
 
-topic = st.sidebar.text_input('Topic', placeholder='Type your topic (e.g., GenAI)...')
+# Part B: Course Information Chatbot
 
-if topic:
+# Initialize chat history
+if 'messages' not in st.session_state:
+    st.session_state.messages = []
+
+# Display chat history
+for message in st.session_state.messages:
+    with st.chat_message(message['role']):
+        st.markdown(message['content'])
+
+# Chat input
+user_input = st.chat_input("Ask a question about iSchool courses...")
+
+if user_input:
+    # Display user message
+    with st.chat_message('user'):
+        st.markdown(user_input)
+    st.session_state.messages.append({'role': 'user', 'content': user_input})
+
+    # Step 1: Embed the user's question and query ChromaDB
     client = st.session_state.client
     response = client.embeddings.create(
-        input=topic,
-        model='text-embedding-3-small')
+        input=user_input,
+        model='text-embedding-3-small'
+    )
+    query_embedding = response.data[0].embedding
 
-    # get the embedding
-    embedding = response.data[0].embedding
-
-    # get text related to this question
     results = collection.query(
-        query_embeddings=[embedding],
+        query_embeddings=[query_embedding],
         n_results=3
     )
 
-    # display results
-    st.subheader(f'Results for: {topic}')
-
+    # Step 2: Build context from retrieved documents
+    context = ""
+    sources = []
     for i in range(len(results['documents'][0])):
-        doc = results['documents'][0][i]
+        doc_text = results['documents'][0][i]
         doc_id = results['ids'][0][i]
+        sources.append(doc_id)
+        context += f"\n--- Document: {doc_id} ---\n{doc_text}\n"
 
-        st.write(f'**{i+1}. {doc_id}**')
+    # Step 3: Send to LLM with RAG context
+    system_prompt = f"""You are a helpful iSchool course information assistant. 
+Answer questions about Syracuse University iSchool courses using the provided syllabus documents.
 
-else:
-    st.info('Enter a topic in the sidebar to search the collection')
+When your answer is based on the retrieved course documents, clearly state which course(s) 
+you are referencing. If the documents don't contain relevant information to answer the question, 
+say so honestly.
+
+Here are the relevant course documents retrieved for this question:
+{context}
+"""
+
+    llm_response = client.chat.completions.create(
+        model='gpt-5-mini',
+        messages=[
+            {'role': 'system', 'content': system_prompt},
+            *st.session_state.messages
+        ]
+    )
+
+    assistant_message = llm_response.choices[0].message.content
+
+    # Display assistant response
+    with st.chat_message('assistant'):
+        st.markdown(assistant_message)
+    st.session_state.messages.append({'role': 'assistant', 'content': assistant_message})

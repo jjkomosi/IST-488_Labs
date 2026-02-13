@@ -7,7 +7,7 @@ lab3_page = st.Page("pages/Lab3.py", title="Lab 3", icon="📝")
 lab4_page = st.Page("pages/Lab4.py", title="Lab 4", icon="📝", default=True)
 
 # Create navigation with Lab2 as default
-nav = st.navigation([lab1_page, lab2_page, lab3_page])
+nav = st.navigation([lab1_page, lab2_page, lab3_page, lab4_page])
 
 # Run the selected page
 nav.run()
