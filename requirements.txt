@@ -2,3 +2,6 @@ streamlit
 openai
 PyMuPDF
 tiktoken
+chromadb
+pysqlite3-binary
+protobuf==3.20
