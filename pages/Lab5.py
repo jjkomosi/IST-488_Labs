@@ -105,7 +105,6 @@ if st.button("Get Suggestions"):
                         col1.metric("Temperature", f"{weather_data['temperature']}°F")
                         col2.metric("Feels Like", f"{weather_data['feels_like']}°F")
                         col3.metric("Humidity", f"{weather_data['humidity']}%")
-                        st.write(f"**Conditions:** {weather_data['description'].title()}")
                         st.write(f"**High/Low:** {weather_data['temp_max']}°F / {weather_data['temp_min']}°F")
 
                         # Append the tool result to messages
