@@ -3,14 +3,14 @@ import json
 import streamlit as st
 from openai import OpenAI
 
-st.title("👕 What to Wear Bot")
-st.write("Enter a city to get weather-appropriate clothing suggestions and outdoor activity ideas!")
+st.title("Weather Bot")
+st.write("Enter a city to get, weather data, weather-appropriate clothing suggestions and outdoor activity ideas!")
 
 open_weather_api_key = st.secrets["OPEN_WEATHER_API_KEY"]
 # location in form City, State, Country
 # e.g., Syracuse, NY, US
 # default units is degrees Fahrenheit
-def get_current_weather(location, open_weather_api_key, units='imperial'):
+def get_current_weather(location, api_key, units='imperial'):
     url = (
         f'https://api.openweathermap.org/data/2.5/weather'
         f'?q={location}&appid={api_key}&units={units}'
