@@ -3,7 +3,7 @@ import json
 import streamlit as st
 from openai import OpenAI
 
-st.title("Weather Bot")
+st.title("🌤 Weather Bot ⛅")
 st.write("Enter a city to get, weather data, weather-appropriate clothing suggestions and outdoor activity ideas!")
 
 open_weather_api_key = st.secrets["OPEN_WEATHER_API_KEY"]
